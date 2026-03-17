@@ -80,13 +80,14 @@ Smart Logging: Includes a custom tracking utility for debugging and performance 
 
 Permission Guards: Sophisticated role-based routing to ensure users only see what they are authorized to see
 
-user side & admin side ss
+Admin side ---
 
 <img width="1090" height="497" alt="Capture1" src="https://github.com/user-attachments/assets/99bdd92c-fd90-4b5c-822f-5b42e071857c" />
 
 
 <img width="1235" height="468" alt="Capture2" src="https://github.com/user-attachments/assets/3bb40eef-abc7-4ab2-a574-4a904f31235b" />
 
+User side---
 
 <img width="998" height="588" alt="Capture3" src="https://github.com/user-attachments/assets/6b1f6db4-cabc-4dda-8651-0deec8cb7ec8" />
 
