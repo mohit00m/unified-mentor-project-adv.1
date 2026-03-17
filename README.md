@@ -49,8 +49,8 @@ Due to browser security (CORS), run the project through a local server (like Liv
 Access the portal at: `http://127.0.0.1:5500/public/login.html`.
 
 **or u can directly check this without adding files in computer**
-//copy n paste it in ur browser//
-"catering-reservation-sys-c9046.firebaseapp.com"
+
+`catering-reservation-sys-c9046.firebaseapp.com`.
 
 **Deployment Workflow**
 
