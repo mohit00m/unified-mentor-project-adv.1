@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login - Caters Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="flex-center" style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);">
+        <div class="card" style="width: 100%; max-width: 400px; border-top: 5px solid #2196f3;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: #2196f3;">caters hub</h1>
+                <p style="color: var(--text-secondary);">Customer Login</p>
+            </div>
+
+            <div id="alertMessage" class="alert" style="display: none; margin-bottom: 1rem; padding: 10px; border-radius: 4px;"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-control" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required placeholder="Enter your password">
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; background-color: #2196f3;">Log In</button>
+                </div>
+            </form>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <p class="text-secondary">New customer? <a href="register-user.html">Create an Account</a></p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <a href="login-admin.html" style="font-size: 0.85rem; color: #999;">Are you an Admin? Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            const alertBox = document.getElementById('alertMessage');
+            const loginBtn = loginForm.querySelector('button[type="submit"]');
+
+            function showAlert(msg, isError = true) {
+                alertBox.textContent = msg;
+                alertBox.style.display = 'block';
+                alertBox.style.backgroundColor = isError ? '#ffebee' : '#e8f5e9';
+                alertBox.style.color = isError ? '#d32f2f' : '#2e7d32';
+            }
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                loginBtn.disabled = true;
+                loginBtn.textContent = "Logging in...";
+                alertBox.style.display = 'none';
+
+                try {
+                    // Ensure your Auth.login logic checks if the user is a 'user' role
+                    await Auth.login(email, password);
+                } catch (error) {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = "Log In";
+                    showAlert(error.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

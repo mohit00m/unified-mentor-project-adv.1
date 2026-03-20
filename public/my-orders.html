@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Rajput Foods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 0% 100%, rgba(46, 204, 113, 0.05) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand { font-weight: 600; font-size: 1.3rem; color: var(--primary); }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-item { text-decoration: none; color: var(--text-muted); font-size: 0.9rem; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { color: var(--primary); }
+
+        /* --- Content --- */
+        .container { max-width: 800px; margin: 3rem auto; padding: 0 1.5rem; }
+        
+        h2 { font-size: 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 15px; }
+
+        .order-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: 0.3s;
+        }
+
+        .order-card:hover { border-color: var(--primary); transform: translateX(5px); }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-id { font-weight: 600; color: var(--text-main); font-size: 1.1rem; }
+        .order-date { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Status Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-PENDING { background: rgba(230, 126, 34, 0.15); color: #e67e22; }
+        .status-COMPLETED { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+        .status-CANCELLED { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+
+        /* Items List */
+        .items-list { list-style: none; padding: 0; margin: 1rem 0; }
+        .items-list li {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .total-price { color: var(--primary); font-weight: 600; font-size: 1.2rem; }
+
+        #loading { text-align: center; padding: 4rem; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">🥗 Rajput Foods</div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">Menu</a>
+                <a href="profile.html" class="nav-item">Profile</a>
+                <a href="#" class="nav-item active">My Orders</a>
+                <a href="#" id="logoutBtn" class="nav-item" style="color: #ef4444;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>📋 Order History</h2>
+
+        <div id="loading">✨ Gathering your delicious history...</div>
+        <div id="ordersList"></div>
+
+        <div id="emptyState" style="text-align: center; padding: 5rem 0; display: none;">
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You haven't placed any orders yet.</p>
+            <a href="index.html" style="background: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 12px; font-weight: 600;">Order Something Tasty</a>
+        </div>
+    </div>
+
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('user');
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', Auth.logout);
+
+            const ordersList = document.getElementById('ordersList');
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    // Listen for orders where customerUid matches current user
+                    firebase.firestore().collection('orders')
+                        .where('customerUid', '==', user.uid)
+                        .onSnapshot((snapshot) => {
+                            loading.style.display = 'none';
+                            ordersList.innerHTML = ''; 
+
+                            if (snapshot.empty) {
+                                emptyState.style.display = 'block';
+                                return;
+                            }
+
+                            emptyState.style.display = 'none';
+                            
+                            // Convert to array and sort by creation time (newest first)
+                            const orders = snapshot.docs.map(doc => ({ 
+                                id: doc.id, 
+                                ...doc.data() 
+                            })).sort((a, b) => {
+                                const tA = a.createdAt?.toDate() || 0;
+                                const tB = b.createdAt?.toDate() || 0;
+                                return tB - tA;
+                            });
+
+                            orders.forEach(order => {
+                                const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString('en-IN', {
+                                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                }) : 'Processing...';
+
+                                const status = order.status || 'PENDING';
+                                
+                                const card = document.createElement('div');
+                                card.className = 'order-card';
+                                card.innerHTML = `
+                                    <div class="order-header">
+                                        <div>
+                                            <span class="order-id">Order #${order.id.slice(0, 8).toUpperCase()}</span>
+                                            <span class="order-date">${date}</span>
+                                        </div>
+                                        <span class="badge status-${status}">${status}</span>
+                                    </div>
+                                    <ul class="items-list">
+                                        ${order.items.map(item => `
+                                            <li>
+                                                <span>${item.quantity}x ${item.name}</span>
+                                                <span>₹${item.price * item.quantity}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                    <div class="order-footer">
+                                        <span style="font-size: 0.85rem; color: var(--text-muted);">Total Paid</span>
+                                        <span class="total-price">₹${order.totalAmount}</span>
+                                    </div>
+                                `;
+                                ordersList.appendChild(card);
+                            });
+                        }, (error) => {
+                            loading.innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
+                        });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

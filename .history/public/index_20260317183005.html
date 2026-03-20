@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rajput Foods - Order Online</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        .cart-count { background: var(--error-color); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; vertical-align: top; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 2rem 0; }
+        .add-btn { width: 100%; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="nav-brand">Rajput Foods</div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item active">Menu</a>
+                <a href="my-orders.html" class="nav-item">My Orders</a>
+                <a href="profile.html" class="nav-item">Profile</a>
+                <a href="cart.html" class="nav-item">
+                    🛒 <span id="cartTotal">0</span></a>
+
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+            <h2>Delicious Menu</h2>
+            <button id="checkoutBtn" class="btn btn-primary" style="display: none;" onclick="processCheckout()">Checkout Now</button>
+        </div>
+
+        <div id="loading" style="text-align: center; padding: 3rem;">Loading items...</div>
+        <div id="menuGrid" class="menu-grid"></div>
+    </div>
+
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/db.js"></script>
+
+    <script>
+        let cart = [];
+        const ADMIN_UID = "82A8mK0pb1OZU9LYd0XoGuWIw0e2"; // Your Admin ID
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('user'); // Ensure they are logged in
+
+            loadMenu();
+        });
+
+        async function loadMenu() {
+            const menuGrid = document.getElementById('menuGrid');
+            const loading = document.getElementById('loading');
+
+            try {
+                // Get products specifically from your admin account
+                const products = await DB.getAdminProducts(ADMIN_UID);
+                loading.style.display = 'none';
+
+                if (products.length === 0) {
+                    menuGrid.innerHTML = '<p>No items available right now.</p>';
+                    return;
+                }
+
+                menuGrid.innerHTML = products.map(p => `
+                    <div class="card">
+                       <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" alt="${p.name}" style="width:100%; height:180px; object-fit:cover; border-radius:5px;">
+                        <h3 style="margin-top:1rem;">${p.name}</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">${p.category}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
+                            <span style="font-weight:bold; font-size:1.2rem; color:var(--primary-color);">₹${p.price}</span>
+                            <button class="btn btn-secondary" onclick="addToCart('${p.id}', '${p.name}', ${p.price})">Add to Cart</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                loading.textContent = "Error loading menu: " + error.message;
+            }
+        }
+
+      function addToCart(id, name, price) {
+    const item = cart.find(i => i.id === id);
+    if (item) {
+        item.quantity++;
+    } else {
+        cart.push({ id, name, price, quantity: 1 });
+    }
+    
+    // Save to localStorage so cart.html can read it
+    localStorage.setItem('userCart', JSON.stringify(cart));
+    
+    updateCartUI();
+}
+
+        function updateCartUI() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('cartTotal').innerText = `₹${total}`;
+            document.getElementById('checkoutBtn').style.display = cart.length > 0 ? 'block' : 'none';
+        }
+
+        async function processCheckout() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            try {
+                // Get customer address from their profile
+                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+
+                if (!userData.address || userData.address === "") {
+                    alert("Please update your delivery address in your Profile first!");
+                    window.location.href = 'profile.html';
+                    return;
+                }
+
+                if (!confirm(`Place order for ₹${cart.reduce((s, i) => s + (i.price * i.quantity), 0)}?`)) return;
+
+                const orderData = {
+                    adminId: ADMIN_UID,
+                    customerUid: user.uid,
+                    customerName: userData.name,
+                    customerAddress: userData.address,
+                    items: cart,
+                    totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    status: "PENDING",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await firebase.firestore().collection('orders').add(orderData);
+                alert("Order placed successfully! Track it in 'My Orders'.");
+                cart = [];
+                updateCartUI();
+                window.location.href = 'my-orders.html';
+            } catch (error) {
+                alert("Checkout failed: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

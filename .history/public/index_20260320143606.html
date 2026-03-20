@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajput Foods - Delicious Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 0% 0%, rgba(46, 204, 113, 0.07) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 100px; /* Space for floating cart */
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand { font-weight: 600; font-size: 1.4rem; color: var(--primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-item { text-decoration: none; color: var(--text-muted); font-size: 0.9rem; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { color: var(--primary); }
+
+        /* --- Hero Section --- */
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .hero p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* --- Menu Grid --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .food-card {
+            background: var(--glass);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .food-card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.08); }
+
+        .food-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .food-info { padding: 1.5rem; }
+        .food-info h3 { margin: 0; font-size: 1.2rem; margin-bottom: 5px; }
+        .food-cat { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .food-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+
+        .food-price { font-size: 1.4rem; font-weight: 600; color: var(--primary); }
+
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .add-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* --- Floating Cart Bar --- */
+        .floating-cart {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(46, 204, 113, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none; /* Shown via JS */
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 25px; opacity: 1; } }
+
+        .checkout-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #loading { text-align: center; padding: 5rem; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">🥗 Rajput Foods</div>
+            <div class="nav-links">
+                <a href="#" class="nav-item active">Menu</a>
+                <a href="my-orders.html" class="nav-item">My Orders</a>
+                <a href="profile.html" class="nav-item">Profile</a>
+                <a href="cart.html" class="nav-item">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>Deliciously Delivered</h1>
+        <p>Premium catering and meals from the kitchen of Rajput Foods</p>
+    </div>
+
+    <div class="container">
+        <div id="loading">✨ Preparing the menu for you...</div>
+        <div id="menuGrid" class="menu-grid"></div>
+    </div>
+
+    <div id="floatingCart" class="floating-cart">
+        <div>
+            <span id="itemsSelected">0 Items</span> • 
+            <span id="cartTotal" style="font-weight: bold;">₹0</span>
+        </div>
+        <button class="checkout-btn" onclick="processCheckout()">Checkout Now →</button>
+    </div>
+
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/db.js"></script>
+
+    <script>
+        let cart = [];
+        const ADMIN_UID = "82A8mK0pb1OZU9LYd0XoGuWIw0e2";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('user');
+            loadMenu();
+        });
+
+        async function loadMenu() {
+            const menuGrid = document.getElementById('menuGrid');
+            const loading = document.getElementById('loading');
+
+            try {
+                const products = await DB.getAdminProducts(ADMIN_UID);
+                loading.style.display = 'none';
+
+                if (products.length === 0) {
+                    menuGrid.innerHTML = '<div style="text-align:center; width:100%;">No items available right now.</div>';
+                    return;
+                }
+
+                menuGrid.innerHTML = products.map(p => `
+                    <div class="food-card">
+                       <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="food-img" alt="${p.name}">
+                       <div class="food-info">
+                            <span class="food-cat">${p.category || 'Specialty'}</span>
+                            <h3>${p.name}</h3>
+                            <div class="food-footer">
+                                <span class="food-price">₹${p.price}</span>
+                                <button class="add-btn" onclick="addToCart('${p.id}', '${p.name}', ${p.price})">Add +</button>
+                            </div>
+                       </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                loading.textContent = "Error: " + error.message;
+            }
+        }
+
+        function addToCart(id, name, price) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.quantity++;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+            
+            localStorage.setItem('userCart', JSON.stringify(cart));
+            updateCartUI();
+        }
+
+       async function processCheckout() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("Please login to place an order.");
+        return;
+    }
+
+    // Get the button to show loading state
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    const originalText = checkoutBtn.innerText;
+    
+    try {
+        // 1. Get customer details
+        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+
+        // 2. Check for address
+        if (!userData || !userData.address || userData.address === "") {
+            alert("Please update your delivery address in your Profile first!");
+            window.location.href = 'profile.html';
+            return;
+        }
+
+        // 3. Confirm Order
+        const total = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+        if (!confirm(`Place order for ₹${total}?`)) return;
+
+        // 4. Show loading state
+        checkoutBtn.disabled = true;
+        checkoutBtn.innerText = "Processing...";
+
+        const orderData = {
+            adminId: ADMIN_UID,
+            customerUid: user.uid,
+            customerName: userData.name || "Customer",
+            customerAddress: userData.address,
+            items: cart,
+            totalAmount: total,
+            status: "PENDING",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // 5. Add to Firestore and WAIT for success
+        await firebase.firestore().collection('orders').add(orderData);
+        
+        // 6. Success! Clear cart and redirect
+        alert("Order placed successfully! Track it in 'My Orders'.");
+        cart = [];
+        localStorage.removeItem('userCart'); // Clear local storage too
+        
+        // This is the line that handles the redirect
+        window.location.href = 'my-orders.html';
+
+    } catch (error) {
+        console.error("Checkout Error:", error);
+        alert("Checkout failed: " + error.message);
+        
+        // Reset button if it fails
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerText = originalText;
+    }
+}
+    </script>
+</body>
+</html>

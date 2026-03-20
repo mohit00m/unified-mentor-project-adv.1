@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajput Foods - Incoming Orders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --accent: #e67e22;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 100% 0%, rgba(230, 126, 34, 0.05) 0, transparent 50%);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center; gap: 10px;
+        }
+
+        .nav-links { display: flex; flex-direction: column; gap: 8px; }
+
+        .nav-item {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center; gap: 12px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--glass);
+            color: white;
+        }
+
+        .nav-item.active { border-left: 4px solid var(--accent); color: white; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 2.5rem 3rem;
+        }
+
+        .header-area { margin-bottom: 2.5rem; }
+
+        /* --- Order Cards --- */
+        .order-card {
+            background: var(--glass);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 1.5rem;
+            transition: 0.3s;
+        }
+
+        .order-card:hover { border-color: rgba(255,255,255,0.2); }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-id { font-weight: 600; font-size: 1.1rem; }
+        
+        /* Status Badges */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-PENDING { background: rgba(230, 126, 34, 0.2); color: #f39c12; }
+        .status-ACCEPTED { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .status-PROCESSING { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+
+        .items-list {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            list-style: none;
+        }
+
+        .items-list li {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+
+        .total-price { font-size: 1.4rem; font-weight: 600; color: var(--primary); }
+
+        .btn-action {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-accept { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--error); color: var(--error); }
+        .btn-outline:hover { background: var(--error); color: white; }
+
+        #loading { color: var(--accent); text-align: center; padding: 2rem; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="nav-brand">🥗 Rajput Foods</div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-item">📦 Products</a>
+            <a href="orders.html" class="nav-item active">📋 Orders</a>
+            <a href="#" class="nav-item">📊 Analytics</a>
+        </div>
+        <div style="margin-top: auto;">
+            <a href="#" id="logoutBtn" class="nav-item" style="color: var(--error);">🚪 Logout</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header-area">
+            <h1>Incoming Orders</h1>
+            <p style="color: var(--text-muted);">Manage real-time customer requests</p>
+        </div>
+
+        <div id="loading">📡 Connecting to live orders...</div>
+
+        <div id="ordersList"></div>
+
+        <div id="emptyState" style="text-align: center; padding: 5rem; display: none;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
+            <h2>No orders yet</h2>
+            <p style="color: var(--text-muted);">When customers place orders, they will appear here.</p>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/db.js?v=2"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('admin');
+
+            if (document.getElementById('logoutBtn')) {
+                document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
+            }
+
+            const ordersList = document.getElementById('ordersList');
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    try {
+                        const orders = await DB.getAdminOrders(user.uid);
+                        loading.style.display = 'none';
+
+                        if (!orders || orders.length === 0) {
+                            emptyState.style.display = 'block';
+                        } else {
+                            // Sort locally: newest first
+                            orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                            orders.forEach(order => {
+                                const card = document.createElement('div');
+                                card.className = 'order-card';
+                                
+                                const date = new Date(order.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                                
+                                let itemsHtml = '<ul class="items-list">';
+                                order.items.forEach(item => {
+                                    itemsHtml += `<li><span>${item.quantity}x ${item.name}</span> <span>${formatCurrency(item.price)}</span></li>`;
+                                });
+                                itemsHtml += '</ul>';
+
+                                card.innerHTML = `
+                                    <div class="order-header">
+                                        <div class="order-id">Order #${order.id.slice(-6).toUpperCase()}</div>
+                                        <span class="badge status-${order.status}">${order.status}</span>
+                                    </div>
+                                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                                        👤 ${order.customerName} &nbsp; | &nbsp; 📅 ${date}
+                                    </div>
+                                    
+                                    ${itemsHtml}
+
+                                    <div class="order-footer">
+                                        <div class="total-price">Total: ${formatCurrency(order.totalAmount)}</div>
+                                        <div style="display: flex; gap: 10px;">
+                                            ${renderActions(order)}
+                                        </div>
+                                    </div>
+                                `;
+                                ordersList.appendChild(card);
+                            });
+                        }
+                    } catch (error) {
+                        loading.textContent = "Error: " + error.message;
+                    }
+                }
+            });
+
+            function renderActions(order) {
+                if (order.status === 'PENDING') {
+                    return `
+                        <button class="btn-action btn-outline" onclick="updateStatus('${order.id}', 'REJECTED')">Reject</button>
+                        <button class="btn-action btn-accept" onclick="updateStatus('${order.id}', 'ACCEPTED')">Accept Order</button>
+                    `;
+                } else if (order.status === 'ACCEPTED') {
+                    return `<button class="btn-action btn-accept" onclick="updateStatus('${order.id}', 'PROCESSING')">Start Processing</button>`;
+                } else if (order.status === 'PROCESSING') {
+                    return `<button class="btn-action btn-accept" style="background: #3498db;" onclick="updateStatus('${order.id}', 'COMPLETED')">Mark Completed</button>`;
+                }
+                return `<span style="color: var(--text-muted)">Order Finalized</span>`;
+            }
+
+            window.updateStatus = async (orderId, status) => {
+                if (!confirm(`Change order status to ${status}?`)) return;
+                try {
+                    await DB.updateOrderStatus(orderId, status);
+                    window.location.reload();
+                } catch (e) {
+                    alert("Update failed: " + e.message);
+                }
+            };
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caters Hub - Portal Access</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --user-color: #2ecc71;
+            --admin-color: #e67e22;
+        }
+        .portal-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            transition: transform 0.3s ease;
+            border-top: 6px solid #ccc;
+        }
+        .login-card:hover { transform: translateY(-5px); }
+        .user-card { border-top-color: var(--user-color); }
+        .admin-card { border-top-color: var(--admin-color); }
+        
+        .header-section { text-align: center; margin-bottom: 2rem; padding-top: 2rem; }
+        .btn-user { background-color: var(--user-color); color: white; border: none; }
+        .btn-admin { background-color: var(--admin-color); color: white; border: none; }
+        
+        .divider { color: #ddd; margin: 0 10px; }
+        .alert { display: none; margin-bottom: 1rem; padding: 10px; border-radius: 4px; font-size: 0.9rem; }
+    </style>
+</head>
+<body style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; font-family: sans-serif;">
+
+    <div class="header-section">
+        <h1 style="color: #333; margin-bottom: 0.5rem;">caters hub</h1>
+        <p style="color: #666;">Choose your portal to continue</p>
+    </div>
+
+    <div class="portal-container">
+        
+        <div class="login-card user-card">
+            <h2 style="color: var(--user-color); margin-bottom: 1rem;">Customer Login</h2>
+            <div id="userAlert" class="alert"></div>
+            
+            <form id="userLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="userEmail" class="form-control" required placeholder="customer@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="userPassword" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-user" style="width: 100%; margin-top: 1rem; padding: 12px; border-radius: 6px; cursor: pointer;">Log In as User</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p style="font-size: 0.9rem; color: #666;">New here? <a href="register-user.html" style="color: var(--user-color); font-weight: bold;">Create Account</a></p>
+            </div>
+        </div>
+
+        <div class="login-card admin-card">
+            <h2 style="color: var(--admin-color); margin-bottom: 1rem;">Admin Portal</h2>
+            <div id="adminAlert" class="alert"></div>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Admin Email</label>
+                    <input type="email" id="adminEmail" class="form-control" required placeholder="admin@catershub.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="adminPassword" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-admin" style="width: 100%; margin-top: 1rem; padding: 12px; border-radius: 6px; cursor: pointer;">Log In as Admin</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p style="font-size: 0.9rem; color: #666;">Staff access? <a href="register-admin.html" style="color: var(--admin-color); font-weight: bold;">Admin Register</a></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initFirebase === 'function') initFirebase();
+
+            const handleLogin = async (e, emailId, passId, alertId, role) => {
+                e.preventDefault();
+                const email = document.getElementById(emailId).value;
+                const password = document.getElementById(passId).value;
+                const alertBox = document.getElementById(alertId);
+                const btn = e.target.querySelector('button');
+
+                // UI Feedback
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = "Authenticating...";
+                alertBox.style.display = 'none';
+
+                try {
+                    // Assuming your Auth.login handles the role or 
+                    // redirects based on the account type in Firestore
+                    await Auth.login(email, password);
+                } catch (error) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    alertBox.textContent = error.message;
+                    alertBox.style.display = 'block';
+                    alertBox.style.backgroundColor = '#ffebee';
+                    alertBox.style.color = '#d32f2f';
+                }
+            };
+
+            // User Form Listener
+            document.getElementById('userLoginForm').addEventListener('submit', (e) => {
+                handleLogin(e, 'userEmail', 'userPassword', 'userAlert', 'user');
+            });
+
+            // Admin Form Listener
+            document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
+                handleLogin(e, 'adminEmail', 'adminPassword', 'adminAlert', 'admin');
+            });
+        });
+    </script>
+</body>
+</html>

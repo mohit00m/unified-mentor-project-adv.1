@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "firebase": "^12.10.0"
+  },
+  "name": "project-adv",
+  "version": "1.0.0",
+  "description": "A comprehensive web-based platform connecting Catering Service Providers (Admins) with Customers (Users), allowing for seamless menu management and ordering.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

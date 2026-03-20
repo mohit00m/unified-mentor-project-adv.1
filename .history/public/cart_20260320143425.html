@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart - Rajput Foods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 50% 0%, rgba(46, 204, 113, 0.05) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand { font-weight: 600; font-size: 1.3rem; color: var(--primary); }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-item { text-decoration: none; color: var(--text-muted); font-size: 0.9rem; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { color: var(--primary); }
+
+        /* --- Layout --- */
+        .container { max-width: 900px; margin: 3rem auto; padding: 0 1.5rem; }
+        
+        h2 { font-size: 2rem; margin-bottom: 2rem; text-align: center; }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        /* --- Cart Items --- */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .cart-item:last-child { border-bottom: none; }
+
+        .item-details h4 { margin: 0; font-size: 1.1rem; }
+        .item-details p { margin: 5px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+        .item-actions { text-align: right; }
+        .item-price { font-weight: 600; font-size: 1.1rem; color: var(--primary); display: block; }
+        
+        .remove-btn {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 8px;
+            padding: 0;
+            text-decoration: underline;
+            opacity: 0.8;
+        }
+        .remove-btn:hover { opacity: 1; }
+
+        /* --- Summary Section --- */
+        .cart-summary {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px dashed var(--glass-border);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .total-row {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 1rem;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-checkout:hover { transform: translateY(-3px); filter: brightness(1.1); }
+        .btn-checkout:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+        .empty-icon { font-size: 4rem; margin-bottom: 1.5rem; display: block; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">🥗 Rajput Foods</div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">Menu</a>
+                <a href="#" class="nav-item active">Cart</a>
+                <a href="my-orders.html" class="nav-item">My Orders</a>
+                <a href="profile.html" class="nav-item">Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Review Your Order</h2>
+
+        <div id="cartContainer" class="glass-card">
+            </div>
+
+        <div id="emptyCart" class="empty-state" style="display: none;">
+            <span class="empty-icon">🛒</span>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Your cart is currently empty.</p>
+            <a href="index.html" style="background: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 12px; font-weight: 600;">Browse Our Menu</a>
+        </div>
+    </div>
+
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/db.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('user');
+
+            const cartContainer = document.getElementById('cartContainer');
+            const emptyCart = document.getElementById('emptyCart');
+
+            function renderCart() {
+                const cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+
+                if (cart.length === 0) {
+                    cartContainer.style.display = 'none';
+                    emptyCart.style.display = 'block';
+                    return;
+                }
+                
+                cartContainer.style.display = 'block';
+                emptyCart.style.display = 'none';
+
+                let total = 0;
+                let html = '';
+
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    html += `
+                        <div class="cart-item">
+                            <div class="item-details">
+                                <h4>${item.name}</h4>
+                                <p>₹${item.price} × ${item.quantity}</p>
+                            </div>
+                            <div class="item-actions">
+                                <span class="item-price">₹${itemTotal}</span>
+                                <button class="remove-btn" onclick="removeItem(${index})">Remove Item</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="cart-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>₹${total}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery Fee</span>
+                            <span style="color: var(--primary);">FREE</span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>Total Amount</span>
+                            <span>₹${total}</span>
+                        </div>
+                        <button id="checkoutBtn" class="btn-checkout">Place Order at Rajput Foods</button>
+                    </div>`;
+
+                cartContainer.innerHTML = html;
+                document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+            }
+
+            window.removeItem = (index) => {
+                let cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+                cart.splice(index, 1);
+                localStorage.setItem('userCart', JSON.stringify(cart));
+                renderCart();
+            };
+
+            async function handleCheckout(e) {
+                const btn = e.target;
+                const cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+                const user = firebase.auth().currentUser;
+                if (!user) return;
+
+                btn.disabled = true;
+                btn.textContent = "Processing Order...";
+
+                try {
+                    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                    const userData = userDoc.data();
+
+                    if (!userData || !userData.address) {
+                        alert("Wait! Please add your delivery address in your Profile first.");
+                        window.location.href = 'profile.html';
+                        return;
+                    }
+
+                    const orderData = {
+                        customerUid: user.uid,
+                        customerName: userData.name || "Customer",
+                        customerAddress: userData.address,
+                        items: cart,
+                        totalAmount: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0),
+                        status: "PENDING",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        brand: "Rajput Foods",
+                        adminId: "82A8mK0pb1OZU9LYd0XoGuWIw0e2" // Keeping consistent with your index.html Admin ID
+                    };
+
+                    await firebase.firestore().collection('orders').add(orderData);
+                    localStorage.removeItem('userCart');
+                    
+                    btn.textContent = "Success! Redirecting...";
+                    setTimeout(() => {
+                        window.location.href =

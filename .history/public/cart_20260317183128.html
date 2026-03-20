@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart - Rajput Foods</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="nav-brand">Rajput Foods</div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">Menu</a>
+                <a href="#" class="nav-item active">Cart</a>
+                <a href="my-orders.html" class="nav-item">My Orders</a>
+                <a href="profile.html" class="nav-item">Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h2>Your Rajput Foods Cart</h2>
+
+        <div id="cartContainer" style="margin-top: 1rem;">
+            </div>
+
+        <div id="emptyCart" style="text-align: center; padding: 4rem; display: none;">
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Your cart is empty.</p>
+            <a href="index.html" class="btn btn-primary">Browse Menu</a>
+        </div>
+    </div>
+
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/db.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            Auth.checkAuth('user');
+
+            const cartContainer = document.getElementById('cartContainer');
+            const emptyCart = document.getElementById('emptyCart');
+
+            function renderCart() {
+                // Using 'userCart' to match the name we used in index.html
+                const cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+
+                if (cart.length === 0) {
+                    cartContainer.innerHTML = '';
+                    emptyCart.style.display = 'block';
+                    return;
+                }
+                emptyCart.style.display = 'none';
+
+                let total = 0;
+                let html = '<div class="card">';
+
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 1rem 0;">
+                            <div>
+                                <h4 style="margin:0;">${item.name}</h4>
+                                <p class="text-secondary" style="margin:0;">₹${item.price} x ${item.quantity}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-weight: bold; margin:0;">₹${itemTotal}</p>
+                                <button class="btn btn-secondary" onclick="removeItem(${index})" style="font-size: 0.8rem; padding: 4px 8px; margin-top: 5px;">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <h3>Total Amount: ₹${total}</h3>
+                        <button id="checkoutBtn" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Place Order at Rajput Foods</button>
+                    </div>
+                </div>`;
+
+                cartContainer.innerHTML = html;
+                document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+            }
+
+            window.removeItem = (index) => {
+                let cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+                cart.splice(index, 1);
+                localStorage.setItem('userCart', JSON.stringify(cart));
+                renderCart();
+            };
+
+            async function handleCheckout() {
+                const cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+                const user = firebase.auth().currentUser;
+                if (!user) return;
+
+                try {
+                    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                    const userData = userDoc.data();
+
+                    if (!userData.address) {
+                        alert("Please add your address in Profile before ordering!");
+                        window.location.href = 'profile.html';
+                        return;
+                    }
+
+                    const orderData = {
+                        customerUid: user.uid,
+                        customerName: userData.name || "Customer",
+                        customerAddress: userData.address,
+                        items: cart,
+                        totalAmount: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0),
+                        status: "PENDING",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        brand: "Rajput Foods"
+                    };
+
+                    await firebase.firestore().collection('orders').add(orderData);
+                    localStorage.removeItem('userCart');
+                    alert('Order placed successfully with Rajput Foods!');
+                    window.location.href = 'my-orders.html';
+
+                } catch (error) {
+                    alert('Order failed: ' + error.message);
+                }
+            }
+
+            renderCart();
+        });
+    </script>
+</body>
+</html>

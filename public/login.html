@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caters Hub - Welcome</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --user-gradient: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            --admin-gradient: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            --glass: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #0f172a; /* Deep dark background */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(46, 204, 113, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(230, 126, 34, 0.15) 0, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-section {
+            text-align: center;
+            padding: 4rem 1rem 2rem;
+        }
+
+        .header-section h1 {
+            font-size: 3rem;
+            margin: 0;
+            background: linear-gradient(to right, #2ecc71, #e67e22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+            letter-spacing: -1px;
+        }
+
+        .header-section p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .portal-container {
+            display: flex;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .login-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .login-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group { margin-bottom: 1.2rem; }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2ecc71;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+        }
+
+        .admin-card .form-control:focus {
+            border-color: #e67e22;
+            box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            margin-top: 1rem;
+        }
+
+        .btn-user { background: var(--user-gradient); }
+        .btn-admin { background: var(--admin-gradient); }
+
+        .btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            display: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .footer-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .footer-link a {
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>caters hub</h1>
+        <p>Premium Catering Management Portal</p>
+    </div>
+
+    <div class="portal-container">
+        <div class="login-card user-card">
+            <h2 style="color: #2ecc71;">👤 Customer Login</h2>
+            <div id="userAlert" class="alert"></div>
+            
+            <form id="userLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="userEmail" class="form-control" required placeholder="name@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="userPassword" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-user">Log In as User</button>
+            </form>
+            
+            <div class="footer-link">
+                New here? <a href="register-user.html" style="color: #2ecc71;">Join as Customer</a>
+            </div>
+        </div>
+
+        <div class="login-card admin-card">
+            <h2 style="color: #e67e22;">🔑 Admin Portal</h2>
+            <div id="adminAlert" class="alert"></div>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Admin Email</label>
+                    <input type="email" id="adminEmail" class="form-control" required placeholder="admin@catershub.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="adminPassword" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-admin">Log In as Admin</button>
+            </form>
+            
+            <div class="footer-link">
+                Business Owner? <a href="register-admin.html" style="color: #e67e22;">Register Business</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initFirebase === 'function') initFirebase();
+
+            const handleLogin = async (e, emailId, passId, alertId, expectedRole) => {
+                e.preventDefault();
+                const email = document.getElementById(emailId).value;
+                const password = document.getElementById(passId).value;
+                const alertBox = document.getElementById(alertId);
+                const btn = e.target.querySelector('button');
+
+                btn.disabled = true;
+                btn.textContent = "Verifying Credentials...";
+                alertBox.style.display = 'none';
+
+                try {
+                    await Auth.login(email, password, expectedRole);
+                } catch (error) {
+                    btn.disabled = false;
+                    btn.textContent = "Log In as " + (expectedRole === 'admin' ? 'Admin' : 'User');
+                    alertBox.textContent = error.message;
+                    alertBox.className = "alert alert-error";
+                    alertBox.style.display = 'block';
+                }
+            };
+
+            document.getElementById('userLoginForm').addEventListener('submit', (e) => {
+                handleLogin(e, 'userEmail', 'userPassword', 'userAlert', 'user');
+            });
+
+            document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
+                handleLogin(e, 'adminEmail', 'adminPassword', 'adminAlert', 'admin');
+            });
+        });
+    </script>
+</body>
+</html>
