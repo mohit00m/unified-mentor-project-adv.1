@@ -1,138 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Registration - Catering Hub</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Partner Registration - Rajput Foods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-</head>
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+        }
 
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 100% 100%, rgba(46, 204, 113, 0.05) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            padding: 2rem;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 3rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .header h2 { margin: 0; color: var(--primary); font-size: 1.8rem; }
+        .header p { color: var(--text-muted); margin-top: 0.5rem; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .full-width { grid-column: span 2; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: 0.3s;
+        }
+
+        .btn-register:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); }
+
+        .footer-link { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .footer-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
+    </style>
+</head>
 <body>
-    <div class="flex-center" style="min-height: 100vh; padding: 2rem;">
-        <div class="card" style="width: 100%; max-width: 600px;">
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <h2 style="color: var(--primary-color);">Partner Registration</h2>
-                <p style="color: var(--text-secondary);">Start selling your catering services</p>
+    <div class="container">
+        <div class="glass-card">
+            <div class="header">
+                <h2>Partner Registration</h2>
+                <p>Start selling your catering services</p>
             </div>
 
             <div id="alertMessage" class="alert"></div>
 
             <form id="registerForm">
-                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="name" class="form-label">Owner Name</label>
+                        <label>Owner Name</label>
                         <input type="text" id="name" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="businessName" class="form-label">Business Name</label>
+                        <label>Business Name</label>
                         <input type="text" id="businessName" class="form-control" required>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="description" class="form-label">About Your Service</label>
-                    <textarea id="description" class="form-control" rows="3"
-                        placeholder="Tell us about your catering specialties..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" id="email" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone" class="form-label">Phone Number</label>
-                    <input type="tel" id="phone" class="form-control" required>
-                </div>
-
-                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group full-width">
+                        <label>About Your Service</label>
+                        <textarea id="description" class="form-control" rows="2" placeholder="Tell us about your catering specialties..."></textarea>
+                    </div>
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                        <label>Email Address</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="phone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
                         <input type="password" id="password" class="form-control" required minlength="6">
                     </div>
                     <div class="form-group">
-                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <label>Confirm Password</label>
                         <input type="password" id="confirmPassword" class="form-control" required minlength="6">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Register Business</button>
-                </div>
+                <button type="submit" id="submitBtn" class="btn-register">Register Business</button>
             </form>
 
-            <div style="text-align: center; margin-top: 1rem;">
-                <p>Already have an account? <a href="index.html">Log In</a></p>
+            <div class="footer-link">
+                Already have an account? <a href="login.html">Log In</a>
             </div>
         </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/auth.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Ensure Firebase is initialized
-        if (typeof initFirebase === 'function') {
-            initFirebase();
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initFirebase === 'function') initFirebase();
 
-        const form = document.getElementById('registerForm');
-        const alertBox = document.getElementById('alertMessage');
-        const submitBtn = form.querySelector('button[type="submit"]');
+            const form = document.getElementById('registerForm');
+            const alertBox = document.getElementById('alertMessage');
+            const submitBtn = document.getElementById('submitBtn');
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Get values
-            const name = document.getElementById('name').value;
-            const businessName = document.getElementById('businessName').value;
-            const description = document.getElementById('description').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Basic Validation
-            if (password !== confirmPassword) {
-                alertBox.textContent = "Passwords do not match!";
-                alertBox.className = "alert alert-error";
-                alertBox.style.display = "block";
-                return;
-            }
-
-            alertBox.style.display = "none";
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Registering Business...";
-
-            try {
-                // IMPORTANT: The keys below must match what Auth.register expects
-                await Auth.register(email, password, 'admin', {
-                    name: name,          // Changed from ownerName to name
-                    businessName: businessName,
-                    description: description,
-                    phone: phone,
-                    address: ""          // Added empty string as placeholder
-                });
-
-                alert('Partner registration successful! Please log in.');
-                window.location.href = 'index.html';
-            } catch (error) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Register Business";
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                alertBox.textContent = error.message;
-                alertBox.className = "alert alert-error";
+                const data = {
+                    name: document.getElementById('name').value,
+                    businessName: document.getElementById('businessName').value,
+                    description: document.getElementById('description').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    password: document.getElementById('password').value,
+                    confirmPassword: document.getElementById('confirmPassword').value
+                };
+
+                if (data.password !== data.confirmPassword) {
+                    showAlert("Passwords do not match!", "error");
+                    return;
+                }
+
+                alertBox.style.display = "none";
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Registering Business...";
+
+                try {
+                    await Auth.register(data.email, data.password, 'admin', {
+                        name: data.name,
+                        businessName: data.businessName,
+                        description: data.description,
+                        phone: data.phone,
+                        address: "" 
+                    });
+
+                    alert('Partner registration successful! Please log in.');
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Register Business";
+                    showAlert(error.message, "error");
+                }
+            });
+
+            function showAlert(msg, type) {
+                alertBox.textContent = msg;
+                alertBox.className = `alert alert-${type}`;
                 alertBox.style.display = "block";
-                console.error("Registration failed:", error);
             }
         });
-    });
-</script>
+    </script>
 </body>
-
 </html>
