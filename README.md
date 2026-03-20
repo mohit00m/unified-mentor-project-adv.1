@@ -325,6 +325,9 @@ The Rajput Foods Digital Catering Ecosystem successfully digitizes the catering 
 
 <img width="529" height="552" alt="e" src="https://github.com/user-attachments/assets/6be27174-7aa3-444b-84b3-1dfedfcf26bf" />
 <img width="609" height="614" alt="f" src="https://github.com/user-attachments/assets/ee6579cd-aac6-4921-b8f3-3196901fa27d" />
+<img width="1181" height="558" alt="g" src="https://github.com/user-attachments/assets/25690782-f06e-456c-8ebc-4ea457828ca3" />
+<img width="918" height="612" alt="h" src="https://github.com/user-attachments/assets/3ae140af-f706-4df1-ac8d-1c2d79f8d8f6" />
+<img width="584" height="567" alt="i" src="https://github.com/user-attachments/assets/dd153e98-5e24-467b-9940-7fb8074906e2" />
 
 
 
