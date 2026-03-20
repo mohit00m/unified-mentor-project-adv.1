@@ -47,7 +47,7 @@ Note: Ensure the 'Email/Password' Auth and 'Firestore' database are toggled 'On'
 
 Due to browser security (CORS), run the project through a local server (like Live Server in VS Code).
 
-Access the portal at: `http://127.0.0.1:5500/public/login.html`.
+Access the portal at: `https://catering-reservation-sys-c9046.web.app`.
 
 **Deployment Workflow**
 
